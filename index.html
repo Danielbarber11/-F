@@ -1,0 +1,245 @@
+
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aivan - AI Coder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&display=swap');
+      
+      html {
+        font-size: 100%; /* Default base size */
+        transition: font-size 0.2s ease;
+      }
+
+      body {
+        font-family: 'Heebo', sans-serif;
+      }
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1); 
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3); 
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.5); 
+      }
+
+      /* Animated Gradient Background - Default */
+      .animate-gradient {
+        background: linear-gradient(-45deg, #3b82f6, #a855f7, #ec4899, #eab308);
+        background-size: 400% 400%;
+        animation: gradientBG 15s ease infinite;
+      }
+
+      /* Themes */
+      .theme-midnight .animate-gradient {
+        background: linear-gradient(-45deg, #0f172a, #312e81, #4c1d95, #1e1b4b);
+        background-size: 400% 400%;
+      }
+
+      .theme-sunset .animate-gradient {
+        background: linear-gradient(-45deg, #c2410c, #be123c, #701a75, #4c0519);
+        background-size: 400% 400%;
+      }
+      
+      .theme-dark .animate-gradient {
+         background: linear-gradient(-45deg, #18181b, #27272a, #3f3f46, #52525b);
+         background-size: 400% 400%;
+      }
+
+      .theme-ocean .animate-gradient {
+         background: linear-gradient(-45deg, #0ea5e9, #0284c7, #0891b2, #155e75);
+         background-size: 400% 400%;
+      }
+
+      .theme-forest .animate-gradient {
+         background: linear-gradient(-45deg, #059669, #10b981, #047857, #064e3b);
+         background-size: 400% 400%;
+      }
+
+      .theme-cherry .animate-gradient {
+         background: linear-gradient(-45deg, #be123c, #e11d48, #9f1239, #881337);
+         background-size: 400% 400%;
+      }
+
+      @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+
+      /* Entrance Animations */
+      .fade-in-up {
+        animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      
+      .slide-in-right {
+        animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        transform: translateX(100%);
+      }
+
+      .slide-up {
+        animation: slideUp 0.3s ease-out forwards;
+      }
+
+      .slide-down {
+        animation: slideDown 0.3s ease-in forwards;
+      }
+
+      /* Premium Ad Entrance Animation */
+      .ad-entrance {
+        animation: adEntrance 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        opacity: 0;
+        transform: perspective(1000px) rotateX(10deg) translateY(50px) scale(0.9);
+      }
+
+      @keyframes adEntrance {
+        to {
+          opacity: 1;
+          transform: perspective(1000px) rotateX(0) translateY(0) scale(1);
+        }
+      }
+
+      @keyframes fadeInUp {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      
+      @keyframes slideInRight {
+        to { transform: translateX(0); }
+      }
+
+      @keyframes slideUp {
+        from { transform: translate(-50%, 100%); opacity: 0; }
+        to { transform: translate(-50%, 0); opacity: 1; }
+      }
+
+      @keyframes slideDown {
+        from { transform: translate(-50%, 0); opacity: 1; }
+        to { transform: translate(-50%, 100%); opacity: 0; }
+      }
+
+      /* 3D Flip Animation Classes */
+      .perspective-1000 {
+        perspective: 1000px;
+      }
+      .transform-style-3d {
+        transform-style: preserve-3d;
+      }
+      .backface-hidden {
+        backface-visibility: hidden;
+      }
+      .rotate-y-180 {
+        transform: rotateY(180deg);
+      }
+
+      /* Accessibility Overrides */
+      body.a11y-grayscale { filter: grayscale(100%); }
+      body.a11y-high-contrast { filter: contrast(150%); }
+      body.a11y-negative-contrast { filter: invert(100%); background-color: black; }
+      body.a11y-light-bg { background: #f0f0f0 !important; color: #000 !important; }
+      body.a11y-light-bg * { background-color: #fff !important; color: #000 !important; border-color: #000 !important; }
+      body.a11y-highlight-links a, body.a11y-highlight-links button { text-decoration: underline !important; outline: 3px solid #ffff00 !important; }
+      body.a11y-readable-font { font-family: Arial, Helvetica, sans-serif !important; letter-spacing: 0.5px; }
+      
+      body.a11y-big-cursor, body.a11y-big-cursor * { 
+        cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 24 24' fill='black' stroke='white' stroke-width='2'><path d='M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z'/></svg>") 10 10, auto !important;
+      }
+      
+      /* Stop Animations - Strong Override */
+      body.a11y-stop-animations *, 
+      body.a11y-stop-animations .animate-gradient { 
+        animation: none !important; 
+        transition: none !important; 
+        background-size: 100% 100% !important;
+        background-position: center !important;
+      }
+      
+      /* Ensure elements are visible when animations are stopped */
+      body.a11y-stop-animations .fade-in-up,
+      body.a11y-stop-animations .slide-in-right,
+      body.a11y-stop-animations .slide-up,
+      body.a11y-stop-animations .ad-entrance {
+        opacity: 1 !important;
+        transform: none !important;
+      }
+
+      /* Circular Loader */
+      .loader {
+        border: 3px solid #f3f3f3;
+        border-radius: 50%;
+        border-top: 3px solid #9333ea; /* Purple 600 */
+        width: 24px;
+        height: 24px;
+        -webkit-animation: spin 1s linear infinite; /* Safari */
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+
+      /* MOBILE BLOCKER */
+      #mobile-blocker {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(-45deg, #1a1a2e, #16213e);
+        z-index: 99999;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        color: white;
+        padding: 20px;
+      }
+
+      @media (max-width: 1024px) {
+        #mobile-blocker {
+          display: flex !important;
+        }
+        #root {
+          display: none !important;
+        }
+      }
+
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="mobile-blocker">
+      <i class="fas fa-desktop text-6xl mb-6 text-purple-400"></i>
+      <h1 class="text-3xl font-bold mb-4">אתר זה מותאם למחשב בלבד</h1>
+      <p class="text-lg opacity-80 max-w-md">לצערנו, מערכת Aivan אינה תומכת במכשירים ניידים או טאבלטים כרגע. אנא היכנס ממחשב שולחני לחוויה מיטבית.</p>
+    </div>
+    <div id="root"></div>
+  </body>
+</html>
