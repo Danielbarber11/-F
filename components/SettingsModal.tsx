@@ -57,7 +57,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
     }
   }, [helpMessages, activeTab]);
   
-  // Sync active a11y classes on mount
   useEffect(() => {
     const currentClasses = new Set<string>();
     document.body.classList.forEach(cls => {
@@ -87,7 +86,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
     }
   };
   
-  // Auto-save history preference toggles specifically
   const handleToggleHistorySave = () => {
     const newVal = !saveHistory;
     setSaveHistory(newVal);
@@ -120,7 +118,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
       newSet.delete(option);
       element.classList.remove(className);
     } else {
-      // If the new option is one of the exclusive visual modes, remove others first
       if (EXCLUSIVE_MODES.includes(option)) {
         EXCLUSIVE_MODES.forEach(mode => {
           if (newSet.has(mode)) {
@@ -161,15 +158,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
     }
   };
 
-  // REMOVED CONTACT TAB FROM THIS LIST
   const tabs = [
     { id: SettingsTab.ACCOUNT, label: 'חשבון', icon: 'fa-user' },
-    { id: SettingsTab.INTERFACE, label: 'עיצוב וממשק', icon: 'fa-palette' },
-    { id: SettingsTab.HISTORY, label: 'הגדרות היסטוריה', icon: 'fa-history' },
+    { id: SettingsTab.INTERFACE, label: 'עיצוב', icon: 'fa-palette' },
+    { id: SettingsTab.HISTORY, label: 'היסטוריה', icon: 'fa-history' },
     { id: SettingsTab.ACCESSIBILITY, label: 'נגישות', icon: 'fa-universal-access' },
-    { id: SettingsTab.HELP, label: 'עזרה ותמיכה', icon: 'fa-headset' },
+    { id: SettingsTab.HELP, label: 'עזרה', icon: 'fa-headset' },
     { id: SettingsTab.ABOUT, label: 'אודות', icon: 'fa-info-circle' },
-    { id: SettingsTab.TERMS, label: 'תנאי שימוש', icon: 'fa-file-contract' },
+    { id: SettingsTab.TERMS, label: 'תנאים', icon: 'fa-file-contract' },
   ];
 
   const a11yOptions = [
@@ -184,10 +180,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 bg-white z-[9999] flex overflow-hidden slide-in-right">
-      {/* Sidebar */}
-      <div className="w-64 bg-gray-50 border-l border-gray-200 flex flex-col p-4 shadow-xl z-10">
-        <div className="flex flex-col items-center mb-6 mt-4">
+    <div className="fixed inset-0 bg-white z-[9999] flex flex-col md:flex-row overflow-hidden slide-in-right">
+      {/* Sidebar / Topbar on Mobile */}
+      <div className="w-full md:w-64 bg-gray-50 border-b md:border-b-0 md:border-l border-gray-200 flex flex-row md:flex-col p-4 shadow-xl z-10 overflow-x-auto md:overflow-visible no-scrollbar shrink-0">
+        <div className="hidden md:flex flex-col items-center mb-6 mt-4">
           <div className="w-20 h-20 rounded-full bg-purple-600 text-white flex items-center justify-center text-3xl font-bold mb-3 shadow-md overflow-hidden">
               {user?.picture ? <img src={user.picture} alt="Profile" className="w-full h-full object-cover" /> : (user?.name?.[0] || 'A')}
           </div>
@@ -195,26 +191,26 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
           <p className="text-xs text-gray-500 truncate w-full text-center">{user?.email}</p>
         </div>
 
-        <nav className="flex-1 space-y-2">
+        <nav className="flex md:flex-col gap-2 md:gap-2 flex-1 w-max md:w-full">
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`w-full flex items-center px-4 py-3 rounded-xl transition-all font-medium ${
+              className={`flex items-center px-4 py-2 md:py-3 rounded-xl transition-all font-medium whitespace-nowrap ${
                 activeTab === tab.id 
                   ? 'bg-purple-100 text-purple-700 shadow-sm transform scale-105' 
                   : 'text-gray-600 hover:bg-gray-200'
               }`}
             >
-              <i className={`fas ${tab.icon} w-8`}></i>
-              {tab.label}
+              <i className={`fas ${tab.icon} w-6 md:w-8`}></i>
+              <span className="text-sm md:text-base">{tab.label}</span>
             </button>
           ))}
         </nav>
 
         <button 
           onClick={onLogout}
-          className="mt-6 flex items-center px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 transition-colors font-medium"
+          className="hidden md:flex mt-6 items-center px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 transition-colors font-medium"
         >
           <i className="fas fa-sign-out-alt w-8"></i>
           התנתק
@@ -222,19 +218,19 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 bg-gray-50/30 p-10 overflow-y-auto relative">
+      <div className="flex-1 bg-gray-50/30 p-4 md:p-10 overflow-y-auto relative h-full">
           <button 
             onClick={onClose} 
-            className="absolute top-6 left-6 w-10 h-10 flex items-center justify-center rounded-full bg-white text-gray-400 hover:text-gray-600 shadow-md hover:shadow-lg transition-all"
+            className="absolute top-4 left-4 md:top-6 md:left-6 w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full bg-white text-gray-400 hover:text-gray-600 shadow-md hover:shadow-lg transition-all z-20"
             title="סגור הגדרות"
           >
-          <i className="fas fa-times text-xl"></i>
+          <i className="fas fa-times text-lg md:text-xl"></i>
         </button>
 
-        <div className="max-w-4xl mx-auto bg-white p-8 rounded-3xl shadow-sm border border-gray-100 min-h-[500px]">
+        <div className="max-w-4xl mx-auto bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100 min-h-[500px]">
           {activeTab === SettingsTab.ACCOUNT && (
             <div className="fade-in-up">
-              <h2 className="text-3xl font-bold mb-8 text-gray-800 border-b pb-4">פרטי חשבון</h2>
+              <h2 className="text-2xl md:text-3xl font-bold mb-8 text-gray-800 border-b pb-4">פרטי חשבון</h2>
               <div className="space-y-6 max-w-lg">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">שם מלא</label>
@@ -256,9 +252,17 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 </div>
                 <button 
                   onClick={handleSaveProfile}
-                  className="bg-purple-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-purple-700 transition-transform hover:-translate-y-1 shadow-md mt-4"
+                  className="bg-purple-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-purple-700 transition-transform hover:-translate-y-1 shadow-md mt-4 w-full md:w-auto"
                 >
                   שמור שינויים
+                </button>
+                
+                <button 
+                    onClick={onLogout}
+                    className="md:hidden w-full mt-4 flex items-center justify-center px-4 py-3 rounded-xl text-red-500 bg-red-50 font-medium"
+                >
+                    <i className="fas fa-sign-out-alt ml-2"></i>
+                    התנתק
                 </button>
               </div>
             </div>
@@ -266,22 +270,22 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
 
           {activeTab === SettingsTab.INTERFACE && (
             <div className="fade-in-up">
-              <h2 className="text-3xl font-bold mb-8 text-gray-800 border-b pb-4">עיצוב וממשק</h2>
+              <h2 className="text-2xl md:text-3xl font-bold mb-8 text-gray-800 border-b pb-4">עיצוב וממשק</h2>
               
               <div className="space-y-6">
                 
                 <div className="mt-8">
                   <h3 className="font-bold text-gray-800 mb-4">ערכת נושא</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 gap-4">
                     
                     {[
                         { id: 'light', name: 'בהיר', color: 'bg-white border-gray-200', textColor: 'text-gray-800' },
                         { id: 'dark', name: 'כהה', color: 'bg-gray-800 border-gray-700', textColor: 'text-gray-200' },
-                        { id: 'midnight', name: 'לילה (Midnight)', color: 'bg-indigo-950 border-indigo-900', textColor: 'text-white' },
-                        { id: 'sunset', name: 'שקיעה (Sunset)', color: 'bg-orange-50 border-orange-200', textColor: 'text-gray-800' },
-                        { id: 'ocean', name: 'אוקיינוס (Ocean)', color: 'bg-cyan-50 border-cyan-200', textColor: 'text-gray-800' },
-                        { id: 'forest', name: 'יער (Forest)', color: 'bg-green-50 border-green-200', textColor: 'text-gray-800' },
-                        { id: 'cherry', name: 'דובדבן (Cherry)', color: 'bg-rose-50 border-rose-200', textColor: 'text-gray-800' },
+                        { id: 'midnight', name: 'לילה', color: 'bg-indigo-950 border-indigo-900', textColor: 'text-white' },
+                        { id: 'sunset', name: 'שקיעה', color: 'bg-orange-50 border-orange-200', textColor: 'text-gray-800' },
+                        { id: 'ocean', name: 'אוקיינוס', color: 'bg-cyan-50 border-cyan-200', textColor: 'text-gray-800' },
+                        { id: 'forest', name: 'יער', color: 'bg-green-50 border-green-200', textColor: 'text-gray-800' },
+                        { id: 'cherry', name: 'דובדבן', color: 'bg-rose-50 border-rose-200', textColor: 'text-gray-800' },
                     ].map(theme => (
                         <div 
                             key={theme.id}
@@ -303,7 +307,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
 
           {activeTab === SettingsTab.HISTORY && (
              <div className="fade-in-up">
-               <h2 className="text-3xl font-bold mb-8 text-gray-800 border-b pb-4">הגדרות היסטוריה</h2>
+               <h2 className="text-2xl md:text-3xl font-bold mb-8 text-gray-800 border-b pb-4">הגדרות היסטוריה</h2>
                
                <div className="flex items-center justify-between p-4 bg-purple-50 rounded-xl border border-purple-100 mb-6">
                   <div>
@@ -362,7 +366,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                             </div>
                          ) : (
                             <>
-                                <span className="truncate text-gray-700 font-medium max-w-[70%]" title={item}>{item}</span>
+                                <span className="truncate text-gray-700 font-medium max-w-[60%] md:max-w-[70%]" title={item}>{item}</span>
                                 <div className="flex items-center gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button 
                                     onClick={() => startRenameHistory(index, item)}
@@ -390,7 +394,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
 
           {activeTab === SettingsTab.ACCESSIBILITY && (
             <div className="fade-in-up">
-               <h2 className="text-3xl font-bold mb-8 text-gray-800 border-b pb-4">הגדרות נגישות</h2>
+               <h2 className="text-2xl md:text-3xl font-bold mb-8 text-gray-800 border-b pb-4">הגדרות נגישות</h2>
                <p className="mb-4 text-gray-600">לחץ להפעלה או כיבוי של הגדרות. (פעיל = מואר בסגול)</p>
                
                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -414,12 +418,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
           )}
 
           {activeTab === SettingsTab.HELP && (
-             <div className="fade-in-up h-[500px] flex flex-col">
-               <div className="flex justify-between items-center mb-4 border-b pb-4">
-                   <h2 className="text-3xl font-bold text-gray-800">עזרה ותמיכה (AI)</h2>
+             <div className="fade-in-up h-[400px] md:h-[500px] flex flex-col">
+               <div className="flex flex-col md:flex-row justify-between items-center mb-4 border-b pb-4 gap-2">
+                   <h2 className="text-2xl md:text-3xl font-bold text-gray-800">עזרה ותמיכה (AI)</h2>
                    <a 
                     href="mailto:vaxtoponline@gmail.com"
-                    className="text-purple-600 bg-purple-50 hover:bg-purple-100 px-4 py-2 rounded-lg text-sm font-bold transition-colors"
+                    className="text-purple-600 bg-purple-50 hover:bg-purple-100 px-4 py-2 rounded-lg text-sm font-bold transition-colors whitespace-nowrap"
                    >
                        לא מצאת תשובה? צור קשר
                    </a>
@@ -458,8 +462,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
 
           {activeTab === SettingsTab.TERMS && (
             <div className="fade-in-up">
-              <div className="flex items-center justify-between border-b pb-4 mb-8">
-                 <h2 className="text-3xl font-bold text-gray-800">תנאי שימוש וגילוי נאות</h2>
+              <div className="flex flex-col md:flex-row items-center justify-between border-b pb-4 mb-8 gap-2">
+                 <h2 className="text-2xl md:text-3xl font-bold text-gray-800">תנאי שימוש</h2>
                  <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-bold border border-green-200">
                     <i className="fas fa-check-circle ml-1"></i>
                     התנאים אושרו
@@ -482,9 +486,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
           
           {activeTab === SettingsTab.ABOUT && (
             <div className="fade-in-up text-center pt-10 flex flex-col items-center">
-              <div className="w-32 h-32 bg-gradient-to-br from-purple-600 to-pink-500 rounded-3xl flex items-center justify-center text-white text-6xl font-bold shadow-lg mb-6 transform rotate-3">A</div>
-              <h1 className="text-5xl font-black text-gray-800 mb-4 tracking-tight">AIVAN</h1>
-              <p className="text-xl text-gray-600 max-w-lg mx-auto leading-relaxed">
+              <div className="w-24 h-24 md:w-32 md:h-32 bg-gradient-to-br from-purple-600 to-pink-500 rounded-3xl flex items-center justify-center text-white text-5xl md:text-6xl font-bold shadow-lg mb-6 transform rotate-3">A</div>
+              <h1 className="text-4xl md:text-5xl font-black text-gray-800 mb-4 tracking-tight">AIVAN</h1>
+              <p className="text-lg md:text-xl text-gray-600 max-w-lg mx-auto leading-relaxed px-4">
                 פלטפורמת ה-AI המובילה לבניית קוד ואתרים בעברית.
                 <br/>
                 נבנה באהבה עבור מפתחים.

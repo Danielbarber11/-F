@@ -3,7 +3,7 @@
 <html lang="he" dir="rtl">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Aivan - AI Coder</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
@@ -18,6 +18,7 @@
 
       body {
         font-family: 'Heebo', sans-serif;
+        overscroll-behavior-y: none; /* Prevent pull-to-refresh on mobile */
       }
       /* Custom Scrollbar */
       ::-webkit-scrollbar {
@@ -194,34 +195,6 @@
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
       }
-
-      /* MOBILE BLOCKER */
-      #mobile-blocker {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(-45deg, #1a1a2e, #16213e);
-        z-index: 99999;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        color: white;
-        padding: 20px;
-      }
-
-      @media (max-width: 1024px) {
-        #mobile-blocker {
-          display: flex !important;
-        }
-        #root {
-          display: none !important;
-        }
-      }
-
     </style>
   <script type="importmap">
 {
@@ -235,11 +208,6 @@
 </script>
 </head>
   <body>
-    <div id="mobile-blocker">
-      <i class="fas fa-desktop text-6xl mb-6 text-purple-400"></i>
-      <h1 class="text-3xl font-bold mb-4">אתר זה מותאם למחשב בלבד</h1>
-      <p class="text-lg opacity-80 max-w-md">לצערנו, מערכת Aivan אינה תומכת במכשירים ניידים או טאבלטים כרגע. אנא היכנס ממחשב שולחני לחוויה מיטבית.</p>
-    </div>
     <div id="root"></div>
   </body>
 </html>

@@ -23,6 +23,8 @@ interface WorkspaceProps {
   onActivateAdSupportedPremium: () => void;
 }
 
+type MobileView = 'preview' | 'code' | 'chat';
+
 const Workspace: React.FC<WorkspaceProps> = ({ 
     initialPrompt, 
     initialLanguage, 
@@ -50,6 +52,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   
   const [activeView, setActiveView] = useState<'preview' | 'code'>('preview');
+  const [mobileView, setMobileView] = useState<MobileView>('preview'); // For Mobile Only
   const [chatMode, setChatMode] = useState<ChatMode>(initialChatMode);
   
   // Current Ad for display
@@ -183,6 +186,11 @@ const Workspace: React.FC<WorkspaceProps> = ({
 
     setInput('');
     setIsLoading(true);
+    // On mobile, if in Creator mode and sending a request, switch to Preview to see results
+    if (window.innerWidth < 768 && chatMode === ChatMode.CREATOR) {
+        setMobileView('preview');
+    }
+    
     abortControllerRef.current = new AbortController();
 
     const historyToUse = chatMode === ChatMode.CREATOR ? creatorMessages : questionMessages;
@@ -301,29 +309,34 @@ const Workspace: React.FC<WorkspaceProps> = ({
   };
 
   return (
-    <div className="flex h-screen w-full bg-white overflow-hidden fade-in-up text-gray-900 font-sans relative">
+    <div className="flex h-screen w-full bg-white overflow-hidden fade-in-up text-gray-900 font-sans relative flex-col md:flex-row">
       
-      <div className="flex-1 flex flex-col min-w-0 h-full relative">
+      {/* LEFT PANE (WORKSPACE) - Hidden on Mobile unless view is Preview/Code */}
+      <div className={`flex-1 flex flex-col min-w-0 h-full relative ${mobileView === 'chat' ? 'hidden md:flex' : 'flex'}`}>
          <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 relative flex-shrink-0 z-20">
              <div className="flex items-center gap-2 z-10">
                 <button onClick={handleBack} className="w-10 h-10 rounded-full bg-gray-50 hover:bg-gray-100 text-gray-600 flex items-center justify-center transition-colors shadow-sm border border-gray-200"><i className="fas fa-arrow-right text-lg"></i></button>
                 <AccessibilityManager positionClass="relative" buttonClass="bg-gray-50 hover:bg-gray-100 text-gray-600 shadow-sm border border-gray-200" />
              </div>
-             <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-100 p-1 rounded-full flex items-center shadow-inner w-[200px] z-0">
+             
+             {/* Desktop Toggle View */}
+             <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-100 p-1 rounded-full items-center shadow-inner w-[200px] z-0 hidden md:flex">
                 <button onClick={() => setActiveView('preview')} className={`flex-1 rounded-full py-1.5 text-xs font-bold transition-all ${activeView === 'preview' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}><i className="fas fa-desktop mr-2"></i>תצוגה</button>
                 <button onClick={() => setActiveView('code')} className={`flex-1 rounded-full py-1.5 text-xs font-bold transition-all ${activeView === 'code' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}><i className="fas fa-code mr-2"></i>קוד</button>
              </div>
-             <div className="w-20"></div>
+             <div className="w-20 hidden md:block"></div>
          </header>
 
-         <div className="flex-1 relative bg-gray-50 overflow-hidden">
-            <div className={`absolute inset-0 w-full h-full ${activeView === 'preview' ? 'block' : 'hidden'}`}>
+         {/* Content Container */}
+         <div className="flex-1 relative bg-gray-50 overflow-hidden pb-16 md:pb-0">
+            {/* Preview View - Mobile: Show if mobileView=preview. Desktop: Show if activeView=preview */}
+            <div className={`absolute inset-0 w-full h-full ${(mobileView === 'preview' || (window.innerWidth >= 768 && activeView === 'preview')) ? 'block' : 'hidden'}`}>
                 {(isLoading || (!code && !isPremium)) ? (
                     <div className={`absolute inset-0 z-50 flex items-center justify-center ${isPremium && code ? 'bg-transparent pointer-events-none' : 'bg-gray-900/40 backdrop-blur-sm'}`}>
                          
                          {/* AD DISPLAY - BILLBOARD STYLE */}
                          {!isPremium && currentAd ? (
-                            <div className="relative w-full max-w-5xl mx-4 bg-white rounded-3xl overflow-hidden shadow-2xl flex flex-col md:flex-row transform transition-all duration-700 border-4 border-transparent animate-gradient p-1 ad-entrance">
+                            <div className="relative w-full max-w-5xl mx-4 bg-white rounded-3xl overflow-hidden shadow-2xl flex flex-col md:flex-row transform transition-all duration-700 border-4 border-transparent animate-gradient p-1 ad-entrance max-h-[80vh] overflow-y-auto">
                                 <div className="absolute inset-0 bg-white z-0 rounded-2xl"></div>
                                 <div className="relative z-10 w-full h-full flex flex-col md:flex-row bg-white rounded-2xl overflow-hidden">
                                   
@@ -331,7 +344,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
                                       href={currentAd.targetUrl} 
                                       target="_blank" 
                                       rel="noopener noreferrer"
-                                      className="w-full md:w-3/5 bg-gradient-to-br from-gray-50 to-gray-100 relative p-8 flex items-center justify-center overflow-hidden group cursor-pointer"
+                                      className="w-full md:w-3/5 bg-gradient-to-br from-gray-50 to-gray-100 relative p-8 flex items-center justify-center overflow-hidden group cursor-pointer min-h-[250px]"
                                   >
                                       <div className="absolute top-0 right-0 w-64 h-64 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
                                       <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
@@ -351,13 +364,13 @@ const Workspace: React.FC<WorkspaceProps> = ({
                                       )}
                                   </a>
 
-                                  <div className="w-full md:w-2/5 p-8 flex flex-col justify-center bg-white relative z-10">
+                                  <div className="w-full md:w-2/5 p-8 flex flex-col justify-center bg-white relative z-10 text-center md:text-right">
                                       <div className="mb-4">
                                           <span className="bg-yellow-400 text-black text-xs font-black px-3 py-1 rounded-md uppercase tracking-wide">
                                               Amazon
                                           </span>
                                       </div>
-                                      <h2 className="text-2xl font-black text-gray-900 mb-4 leading-tight" dir="ltr">{currentAd.description}</h2>
+                                      <h2 className="text-xl md:text-2xl font-black text-gray-900 mb-4 leading-tight" dir="ltr">{currentAd.description}</h2>
                                       <p className="text-gray-500 text-sm mb-8 leading-relaxed">המוצר הנמכר ביותר בקטגוריה. אל תפספסו את ההזדמנות לשדרג.</p>
                                       
                                       {currentAd.targetUrl && (
@@ -384,7 +397,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
                          
                          {/* Floating Loader */}
                          {isLoading && (
-                           <div className={`absolute bottom-6 left-1/2 transform -translate-x-1/2 z-50 ${isPremium ? 'top-1/2 bottom-auto' : ''}`}>
+                           <div className={`absolute bottom-20 md:bottom-6 left-1/2 transform -translate-x-1/2 z-50 ${isPremium ? 'top-1/2 bottom-auto' : ''}`}>
                                <div className="flex items-center gap-3 bg-white/90 backdrop-blur-md px-6 py-3 rounded-full shadow-2xl border border-white/50 animate-bounce">
                                    <div className="relative">
                                        <div className="w-3 h-3 bg-purple-600 rounded-full animate-ping absolute top-0 left-0 opacity-75"></div>
@@ -407,7 +420,8 @@ const Workspace: React.FC<WorkspaceProps> = ({
                 )}
             </div>
 
-            <div className={`absolute inset-0 w-full h-full bg-white flex flex-col ${activeView === 'code' ? 'flex' : 'hidden'}`}>
+            {/* Code View - Mobile: Show if mobileView=code. Desktop: Show if activeView=code */}
+            <div className={`absolute inset-0 w-full h-full bg-white flex-col ${(mobileView === 'code' || (window.innerWidth >= 768 && activeView === 'code')) ? 'flex' : 'hidden'}`}>
                 {!isLoading && (
                   <div className="h-16 bg-gray-50 border-b border-gray-200 flex items-center px-4 flex-shrink-0 relative overflow-x-auto no-scrollbar slide-in-right">
                       <div className="mx-auto bg-white border border-gray-300 rounded-full flex items-center p-1.5 shadow-sm gap-1 whitespace-nowrap min-w-max">
@@ -445,8 +459,11 @@ const Workspace: React.FC<WorkspaceProps> = ({
             </div>
          </div>
       </div>
-      <div className="w-px bg-gray-200 h-full flex-shrink-0 shadow-sm z-20"></div>
-      <div className="w-full md:w-[400px] bg-white flex flex-col h-full z-10 relative shadow-[-5px_0_15px_-5px_rgba(0,0,0,0.1)]">
+
+      <div className="hidden md:block w-px bg-gray-200 h-full flex-shrink-0 shadow-sm z-20"></div>
+
+      {/* RIGHT PANE (CHAT) - Hidden on mobile unless mobileView=chat */}
+      <div className={`w-full md:w-[400px] bg-white flex flex-col h-full z-10 relative shadow-[-5px_0_15px_-5px_rgba(0,0,0,0.1)] pb-16 md:pb-0 ${mobileView === 'chat' ? 'flex' : 'hidden md:flex'}`}>
             <header className="h-16 bg-white border-b border-gray-200 flex flex-col items-center justify-center px-4 flex-shrink-0 relative">
                  <span className="text-[10px] font-black tracking-widest text-gray-300 mb-1">AIVAN</span>
                  <div className="flex items-center gap-3 w-full justify-center">
@@ -493,6 +510,23 @@ const Workspace: React.FC<WorkspaceProps> = ({
                </div>
             </div>
       </div>
+
+      {/* MOBILE BOTTOM NAVIGATION - ONLY VISIBLE ON MOBILE */}
+      <div className="fixed bottom-0 left-0 w-full h-16 bg-white border-t border-gray-200 flex md:hidden items-center justify-around z-50 shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">
+         <button onClick={() => setMobileView('preview')} className={`flex flex-col items-center justify-center w-full h-full transition-colors ${mobileView === 'preview' ? 'text-purple-600' : 'text-gray-400'}`}>
+            <i className="fas fa-desktop text-xl mb-1"></i>
+            <span className="text-[10px] font-bold">תצוגה</span>
+         </button>
+         <button onClick={() => setMobileView('chat')} className={`flex flex-col items-center justify-center w-full h-full transition-colors ${mobileView === 'chat' ? 'text-purple-600' : 'text-gray-400'}`}>
+            <i className="fas fa-comment text-xl mb-1"></i>
+            <span className="text-[10px] font-bold">צ'אט</span>
+         </button>
+         <button onClick={() => setMobileView('code')} className={`flex flex-col items-center justify-center w-full h-full transition-colors ${mobileView === 'code' ? 'text-purple-600' : 'text-gray-400'}`}>
+            <i className="fas fa-code text-xl mb-1"></i>
+            <span className="text-[10px] font-bold">קוד</span>
+         </button>
+      </div>
+
     </div>
   );
 };

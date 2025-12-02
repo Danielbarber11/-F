@@ -66,12 +66,12 @@ const AnimatedSelect = ({
       ref={containerRef}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className={`relative transition-all duration-300 ease-out bg-white/10 backdrop-blur-md border border-white/20 rounded-xl cursor-pointer hover:bg-white/20 z-20 h-[42px] hover:scale-105`}
-      style={{ minWidth: '180px' }}
+      className={`relative transition-all duration-300 ease-out bg-white/10 backdrop-blur-md border border-white/20 rounded-xl cursor-pointer hover:bg-white/20 z-20 h-[42px] hover:scale-105 flex-1 md:flex-none`}
+      style={{ minWidth: '140px' }}
       onClick={() => setIsOpen(!isOpen)}
     >
       <div className="flex items-center justify-between px-3 py-2 h-full text-white">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 overflow-hidden">
           <i className={`fas ${icon}`}></i>
           <span className="text-sm font-medium truncate">{selectedLabel}</span>
         </div>
@@ -157,19 +157,19 @@ const Dashboard: React.FC<DashboardProps> = ({
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col items-center animate-gradient p-4 relative">
+    <div className="min-h-screen w-full flex flex-col items-center animate-gradient p-4 relative overflow-x-hidden">
       
       {/* Top Left - Swapped Buttons */}
-      <div className="fixed top-6 left-6 z-50 flex items-center gap-3">
+      <div className="fixed top-4 left-4 md:top-6 md:left-6 z-50 flex items-center gap-2 md:gap-3">
         
         {/* Premium Button */}
         {!user?.isPremium && (
             <button 
                 onClick={onShowPremium}
-                className="h-12 px-4 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-300 hover:to-orange-400 border border-white/20 flex items-center gap-2 text-white shadow-lg transition-transform hover:scale-105"
+                className="h-10 md:h-12 px-3 md:px-4 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-300 hover:to-orange-400 border border-white/20 flex items-center gap-2 text-white shadow-lg transition-transform hover:scale-105"
             >
-                <i className="fas fa-crown text-yellow-100 animate-pulse"></i>
-                <span className="font-bold text-sm">פרימיום</span>
+                <i className="fas fa-crown text-yellow-100 animate-pulse text-xs md:text-base"></i>
+                <span className="font-bold text-xs md:text-sm hidden md:inline">פרימיום</span>
             </button>
         )}
 
@@ -177,20 +177,20 @@ const Dashboard: React.FC<DashboardProps> = ({
         <div className="relative" ref={profileDropdownRef}>
           <button 
             onClick={() => setShowProfileMenu(!showProfileMenu)}
-            className="w-12 h-12 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur border border-white/40 flex items-center justify-center text-white shadow-lg transition-transform hover:scale-110 relative"
+            className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur border border-white/40 flex items-center justify-center text-white shadow-lg transition-transform hover:scale-110 relative"
           >
              {user?.picture ? (
                <img src={user.picture} alt="Profile" className="w-full h-full rounded-full object-cover" />
              ) : (
-               <i className="fas fa-user text-xl"></i>
+               <i className="fas fa-user text-lg md:text-xl"></i>
              )}
              {user?.isAdmin && pendingAdsCount > 0 && (
-                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center animate-bounce border border-white">{pendingAdsCount}</span>
+                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center animate-bounce border border-white">{pendingAdsCount}</span>
              )}
           </button>
 
           {showProfileMenu && (
-            <div className="absolute top-14 left-0 w-64 bg-white rounded-2xl shadow-2xl p-4 fade-in-up origin-top-left z-[60]">
+            <div className="absolute top-12 md:top-14 left-0 w-64 bg-white rounded-2xl shadow-2xl p-4 fade-in-up origin-top-left z-[60]">
               <div className="flex flex-col items-center border-b border-gray-100 pb-4 mb-2">
                 <div className="w-16 h-16 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-2xl font-bold mb-2 overflow-hidden relative">
                   {user?.picture ? (
@@ -238,47 +238,47 @@ const Dashboard: React.FC<DashboardProps> = ({
       </div>
 
       {/* Top Right Controls */}
-      <div className="fixed top-6 right-6 flex items-center gap-3 z-50">
-        <AccessibilityManager positionClass="relative" buttonClass="bg-white/20 hover:bg-white/30" />
+      <div className="fixed top-4 right-4 md:top-6 md:right-6 flex items-center gap-2 md:gap-3 z-50">
+        <AccessibilityManager positionClass="relative" buttonClass="bg-white/20 hover:bg-white/30 h-10 w-10 md:h-12 md:w-12" />
         
         <button 
           onClick={onLogout}
-          className="group relative flex items-center h-10 w-10 hover:w-32 bg-red-500 rounded-full text-white shadow-lg transition-all duration-300 ease-out overflow-hidden"
+          className="group relative flex items-center h-10 w-10 md:h-10 md:w-10 hover:md:w-32 bg-red-500 rounded-full text-white shadow-lg transition-all duration-300 ease-out overflow-hidden"
           title="התנתק"
         >
           <div className="absolute right-0 top-0 w-10 h-10 flex items-center justify-center z-10">
              <i className="fas fa-sign-out-alt text-lg"></i>
           </div>
-          <span className="whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-sm font-bold pr-10 pl-3 w-full text-center">
+          <span className="whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-sm font-bold pr-10 pl-3 w-full text-center hidden md:block">
             התנתק
           </span>
         </button>
       </div>
 
       {/* Header */}
-      <header className="w-full max-w-6xl flex justify-center py-8 fade-in-up" style={{ animationDelay: '0.1s' }}>
+      <header className="w-full max-w-6xl flex justify-center py-12 md:py-8 fade-in-up mt-8 md:mt-0" style={{ animationDelay: '0.1s' }}>
         <div className="text-center">
-          <h1 className="text-7xl font-black text-white drop-shadow-lg tracking-wide">AIVAN</h1>
-          <p className="text-white/90 mt-2 text-xl font-light">המומחה שלך לבניית קוד</p>
+          <h1 className="text-5xl md:text-7xl font-black text-white drop-shadow-lg tracking-wide">AIVAN</h1>
+          <p className="text-white/90 mt-2 text-lg md:text-xl font-light">המומחה שלך לבניית קוד</p>
         </div>
       </header>
 
       {/* Main Input */}
-      <div className="w-full max-w-4xl mt-10 fade-in-up z-40" style={{ animationDelay: '0.2s' }}>
+      <div className="w-full md:max-w-4xl mt-6 md:mt-10 fade-in-up z-40 px-2" style={{ animationDelay: '0.2s' }}>
         <div className="bg-white/20 backdrop-blur-xl rounded-3xl shadow-2xl p-2 border border-white/30 relative">
           
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="מה תרצה לבנות היום? (לדוגמה: דף נחיתה למספרה עם גלריה)"
-            className="w-full h-32 bg-transparent text-white placeholder-white/70 p-4 text-lg resize-none focus:outline-none"
+            className="w-full h-24 md:h-32 bg-transparent text-white placeholder-white/70 p-4 text-base md:text-lg resize-none focus:outline-none"
           />
 
-          <div className="flex flex-wrap items-center justify-between px-4 pb-2 mt-2 gap-3 relative">
-            <div className="flex gap-3 items-start relative flex-wrap">
+          <div className="flex flex-col md:flex-row items-center justify-between px-2 md:px-4 pb-2 mt-2 gap-3 relative">
+            <div className="flex gap-2 md:gap-3 items-center relative flex-wrap justify-center md:justify-start w-full md:w-auto">
                <button 
                 onClick={() => fileInputRef.current?.click()}
-                className="text-white/80 hover:text-white hover:bg-white/10 w-10 h-10 flex items-center justify-center rounded-full transition-colors relative mt-1"
+                className="text-white/80 hover:text-white hover:bg-white/10 w-10 h-10 flex items-center justify-center rounded-full transition-colors relative"
                 title="הוסף קובץ או תמונה"
               >
                 <i className="fas fa-paperclip text-xl"></i>
@@ -297,52 +297,55 @@ const Dashboard: React.FC<DashboardProps> = ({
                 accept="image/*, .txt, .js, .html, .css, .json"
               />
 
-              <AnimatedSelect 
-                icon="fa-code"
-                value={language}
-                onChange={setLanguage}
-                options={[
-                  { value: "HTML/CSS/JS", label: "HTML/Web" },
-                  { value: "Python", label: "Python" },
-                  { value: "React", label: "React" },
-                  { value: "NodeJS", label: "Node.js" }
-                ]}
-              />
+              <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 no-scrollbar">
+                <AnimatedSelect 
+                    icon="fa-code"
+                    value={language}
+                    onChange={setLanguage}
+                    options={[
+                    { value: "HTML/CSS/JS", label: "HTML/Web" },
+                    { value: "Python", label: "Python" },
+                    { value: "React", label: "React" },
+                    { value: "NodeJS", label: "Node.js" }
+                    ]}
+                />
 
-               <AnimatedSelect 
-                icon="fa-robot"
-                value={chatMode}
-                onChange={setChatMode}
-                options={[
-                  { value: ChatMode.CREATOR, label: "סוכן (יוצר)" },
-                  { value: ChatMode.QUESTION, label: "שאלה" }
-                ]}
-              />
+                <AnimatedSelect 
+                    icon="fa-robot"
+                    value={chatMode}
+                    onChange={setChatMode}
+                    options={[
+                    { value: ChatMode.CREATOR, label: "סוכן (יוצר)" },
+                    { value: ChatMode.QUESTION, label: "שאלה" }
+                    ]}
+                />
 
-              <AnimatedSelect 
-                icon="fa-brain"
-                value={model}
-                onChange={setModel}
-                options={[
-                  { value: "gemini-2.5-flash", label: "⚡ Aivan Flash (מהיר)" },
-                  { value: "gemini-3-pro-preview", label: "🧠 Aivan Pro (חכם)" }
-                ]}
-              />
+                <AnimatedSelect 
+                    icon="fa-brain"
+                    value={model}
+                    onChange={setModel}
+                    options={[
+                    { value: "gemini-2.5-flash", label: "⚡ Flash" },
+                    { value: "gemini-3-pro-preview", label: "🧠 Pro" }
+                    ]}
+                />
+              </div>
             </div>
 
             <button 
               onClick={handleSend}
               disabled={!prompt.trim()}
-              className="bg-white text-purple-600 w-14 h-14 rounded-full flex items-center justify-center shadow-lg hover:scale-110 disabled:opacity-50 disabled:scale-100 transition-all duration-300 z-10"
+              className="bg-white text-purple-600 w-full md:w-14 h-12 md:h-14 rounded-xl md:rounded-full flex items-center justify-center shadow-lg hover:scale-105 md:hover:scale-110 disabled:opacity-50 disabled:scale-100 transition-all duration-300 z-10 mt-2 md:mt-0"
             >
-              <i className="fas fa-paper-plane text-2xl transform translate-x-[-2px] translate-y-[2px]"></i>
+              <span className="md:hidden font-bold mr-2">שלח בקשה</span>
+              <i className="fas fa-paper-plane text-lg md:text-2xl transform md:translate-x-[-2px] md:translate-y-[2px]"></i>
             </button>
           </div>
         </div>
       </div>
 
-      <div className="w-full max-w-3xl mt-12 fade-in-up z-0" style={{ animationDelay: '0.4s' }}>
-        <h3 className="text-white font-bold text-lg mb-4 px-2 opacity-90">היסטוריה אחרונה</h3>
+      <div className="w-full max-w-3xl mt-8 md:mt-12 fade-in-up z-0 px-2 pb-10" style={{ animationDelay: '0.4s' }}>
+        <h3 className="text-white font-bold text-lg mb-4 px-2 opacity-90 text-center md:text-right">היסטוריה אחרונה</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {sessions.length === 0 ? (
             <div className="text-white/50 text-center col-span-2 py-8">אין היסטוריה עדיין. התחל ליצור!</div>
