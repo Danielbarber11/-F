@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 import { ChatMessage, Role, ChatMode } from "../types";
 
@@ -39,7 +38,8 @@ const buildRequestParams = async (
   files?: FileList | null,
   chatMode: ChatMode = ChatMode.CREATOR,
   currentCode?: string,
-  isPremium: boolean = false
+  isPremium: boolean = false,
+  modelId: string = 'gemini-2.5-flash'
 ) => {
   const parts: any[] = [{ text: prompt }];
 
@@ -63,13 +63,26 @@ const buildRequestParams = async (
   }
 
   let specificInstruction = "";
-  if (chatMode === ChatMode.CREATOR) {
+  
+  if (modelId === 'researcher-designer') {
+     specificInstruction = `
+     MODE: RESEARCHER & DESIGNER (חוקר מעצב).
+     You are acting as an advanced Research/Design AI (simulating GPT-5 capabilities).
+     
+     1. **Deep Analysis**: Before writing code, briefly analyze the user's request from a UX/UI and Architectural perspective.
+     2. **High-End Design**: Your design choices must be sophisticated. Use complex animations, glassmorphism, and advanced layouts.
+     3. **Code Quality**: Write highly modular, clean, and commented code.
+     4. **Personality**: act as a senior architect.
+     `;
+  } else if (chatMode === ChatMode.CREATOR) {
     specificInstruction = `
     מצב עבודה: **סוכן / יוצר (Creator)**.
     תפקידך הבלעדי הוא לכתוב קוד, לתקן שגיאות בקוד או לשפר את הקוד הקיים בהתבסס על [הקוד הנוכחי במערכת] אם סופק.
     
     כלל ברזל: עליך לספק תמיד את הקוד המלא והמעודכן ביותר בתוך בלוקי קוד.
     אל תכתוב רק את השינויים. כתוב את הקובץ המלא.
+    **CRITICAL**: DO NOT REPEAT THE CODE. Output the code block ONCE. Do not output multiple code blocks for the same file.
+    Output a SINGLE HTML file containing CSS and JS.
 
     חשוב מאוד: אם המשתמש שואל שאלה כללית שאינה בקשה ליצירת קוד, תיקון קוד או שיפור קוד (למשל "מה שלומך?" או "הסבר לי איך זה עובד"), עליך לסרב ולענות אך ורק את המשפט הבא:
     "הבוט רק מוסיף, מתקן שגיאות ומשפר את הקוד".
@@ -93,26 +106,36 @@ const buildRequestParams = async (
       2. YOU MUST INJECT REAL ADS. DO NOT INVENT PRODUCTS.
          Use ONLY the following specific HTML snippets for ads. Place them in a Sidebar, Grid, or between content sections.
          Ensure all links have target="_blank" and rel="noopener noreferrer".
+         Labels (Sponsored/Check Price) MUST be in HEBREW. Product Names MUST remain in ENGLISH.
          
          --- AD OPTION 1 (Logitech) ---
          <div class="border border-gray-200 rounded-xl p-4 bg-white shadow-sm my-6 max-w-sm mx-auto">
-            <img src="https://m.media-amazon.com/images/I/71SAamTGWQL._AC_SL1500_.jpg" alt="Logitech Brio 4K" class="w-full h-48 object-contain mb-3">
-            <h3 class="font-bold text-gray-900 leading-tight mb-2">Logitech Brio 4K Webcam</h3>
-            <a href="https://amzn.to/3XVohL0" target="_blank" rel="noopener noreferrer" class="block w-full text-center bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold py-2 rounded-lg transition-colors">לרכישה באמזון</a>
+            <div class="bg-gray-100 rounded-lg mb-3 p-2 relative">
+               <span class="absolute top-2 right-2 bg-gray-200 text-gray-600 text-[10px] px-2 py-0.5 rounded">ממומן</span>
+               <img src="https://m.media-amazon.com/images/I/71SAamTGWQL._AC_SL1500_.jpg" alt="Logitech Brio 4K" class="w-full h-48 object-contain mix-blend-multiply">
+            </div>
+            <h3 class="font-bold text-gray-900 leading-tight mb-2 text-left" dir="ltr">Logitech Brio 4K Webcam</h3>
+            <a href="https://amzn.to/3XVohL0" target="_blank" rel="noopener noreferrer" class="block w-full text-center bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold py-2 rounded-lg transition-colors">בדיקת מחיר באמזון</a>
          </div>
 
          --- AD OPTION 2 (Sceptre Monitor) ---
          <div class="border border-gray-200 rounded-xl p-4 bg-white shadow-sm my-6 max-w-sm mx-auto">
-            <img src="https://m.media-amazon.com/images/I/61KJzoYejTS._SL1305_.jpg" alt="Sceptre Monitor" class="w-full h-48 object-contain mb-3">
-            <h3 class="font-bold text-gray-900 leading-tight mb-2">Sceptre 27-inch Gaming Monitor</h3>
-            <a href="https://amzn.to/48GHZAd" target="_blank" rel="noopener noreferrer" class="block w-full text-center bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold py-2 rounded-lg transition-colors">לרכישה באמזון</a>
+            <div class="bg-gray-100 rounded-lg mb-3 p-2 relative">
+               <span class="absolute top-2 right-2 bg-gray-200 text-gray-600 text-[10px] px-2 py-0.5 rounded">ממומן</span>
+               <img src="https://m.media-amazon.com/images/I/61KJzoYejTS._SL1305_.jpg" alt="Sceptre Monitor" class="w-full h-48 object-contain mix-blend-multiply">
+            </div>
+            <h3 class="font-bold text-gray-900 leading-tight mb-2 text-left" dir="ltr">Sceptre 27-inch Gaming Monitor</h3>
+            <a href="https://amzn.to/48GHZAd" target="_blank" rel="noopener noreferrer" class="block w-full text-center bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold py-2 rounded-lg transition-colors">בדיקת מחיר באמזון</a>
          </div>
          
          --- AD OPTION 3 (Samsung Monitor) ---
          <div class="border border-gray-200 rounded-xl p-4 bg-white shadow-sm my-6 max-w-sm mx-auto">
-            <img src="https://m.media-amazon.com/images/I/61D59-PwUAL._AC_SL1500_.jpg" alt="Samsung ViewFinity S8" class="w-full h-48 object-contain mb-3">
-            <h3 class="font-bold text-gray-900 leading-tight mb-2">SAMSUNG ViewFinity S8 (S80D)</h3>
-            <a href="https://amzn.to/4aiTtLx" target="_blank" rel="noopener noreferrer" class="block w-full text-center bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold py-2 rounded-lg transition-colors">לרכישה באמזון</a>
+             <div class="bg-gray-100 rounded-lg mb-3 p-2 relative">
+               <span class="absolute top-2 right-2 bg-gray-200 text-gray-600 text-[10px] px-2 py-0.5 rounded">ממומן</span>
+               <img src="https://m.media-amazon.com/images/I/61D59-PwUAL._AC_SL1500_.jpg" alt="Samsung ViewFinity S8" class="w-full h-48 object-contain mix-blend-multiply">
+            </div>
+            <h3 class="font-bold text-gray-900 leading-tight mb-2 text-left" dir="ltr">SAMSUNG ViewFinity S8 (S80D)</h3>
+            <a href="https://amzn.to/4aiTtLx" target="_blank" rel="noopener noreferrer" class="block w-full text-center bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold py-2 rounded-lg transition-colors">בדיקת מחיר באמזון</a>
          </div>
 
       3. **MANDATORY DISCLOSURE**: You MUST include this EXACT footer in the HTML <body>:
@@ -152,13 +175,16 @@ export const sendMessageToGemini = async (
 ): Promise<string> => {
   let retryCount = 0;
   const maxRetries = 3;
+  
+  // Map "researcher-designer" to a real available model for backend processing
+  const effectiveModelId = modelId === 'researcher-designer' ? 'gemini-3-pro-preview' : modelId;
 
   while (true) {
     try {
-      const { contents, systemInstruction } = await buildRequestParams(prompt, history, files, chatMode, currentCode, isPremium);
+      const { contents, systemInstruction } = await buildRequestParams(prompt, history, files, chatMode, currentCode, isPremium, modelId);
 
       const response: GenerateContentResponse = await ai.models.generateContent({
-        model: modelId,
+        model: effectiveModelId,
         contents,
         config: { systemInstruction }
       });
@@ -199,12 +225,15 @@ export async function* sendMessageToGeminiStream(
   let retryCount = 0;
   const maxRetries = 3;
 
+  // Map "researcher-designer" to a real available model for backend processing
+  const effectiveModelId = modelId === 'researcher-designer' ? 'gemini-3-pro-preview' : modelId;
+
   while (true) {
     try {
-      const { contents, systemInstruction } = await buildRequestParams(prompt, history, files, chatMode, currentCode, isPremium);
+      const { contents, systemInstruction } = await buildRequestParams(prompt, history, files, chatMode, currentCode, isPremium, modelId);
 
       const responseStream = await ai.models.generateContentStream({
-        model: modelId,
+        model: effectiveModelId,
         contents,
         config: { systemInstruction }
       });

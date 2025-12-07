@@ -326,7 +326,8 @@ const Dashboard: React.FC<DashboardProps> = ({
                     onChange={setModel}
                     options={[
                     { value: "gemini-2.5-flash", label: "⚡ Flash" },
-                    { value: "gemini-3-pro-preview", label: "🧠 Pro" }
+                    { value: "gemini-3-pro-preview", label: "🧠 Pro" },
+                    { value: "researcher-designer", label: "🔍 חוקר מעצב" }
                     ]}
                 />
               </div>

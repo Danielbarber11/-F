@@ -1,13 +1,9 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import AccessibilityManager from './AccessibilityManager';
 import { User } from '../types';
-
-declare global {
-  interface Window {
-    google: any;
-  }
-}
+import { auth, googleProvider } from '../services/firebase';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 
 interface AuthScreenProps {
   onLogin: (user: User) => void;
@@ -20,139 +16,55 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onSignup }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  
-  const googleLoginRef = useRef<HTMLDivElement>(null);
-  const googleSignupRef = useRef<HTMLDivElement>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const initializeGoogleButton = (element: HTMLElement | null, context: 'signin' | 'signup') => {
-    if (window.google && window.google.accounts && window.google.accounts.id && element) {
-      window.google.accounts.id.initialize({
-        client_id: "1029411846084-2jidcvnmiumb0ajqdm3fcot1rvmaldr6.apps.googleusercontent.com",
-        callback: handleGoogleCallback,
-        auto_select: false,
-        cancel_on_tap_outside: true
-      });
-
-      window.google.accounts.id.renderButton(
-        element,
-        { 
-          theme: "outline", 
-          size: "large", 
-          width: element.offsetWidth, 
-          text: context === 'signup' ? "signup_with" : "signin_with", 
-          shape: "pill" 
-        }
-      );
-    }
-  };
-
-  useEffect(() => {
-    const checkGoogleLoad = setInterval(() => {
-      if (window.google?.accounts?.id) {
-        if (!isSignup) {
-           initializeGoogleButton(googleLoginRef.current, 'signin');
-        } else {
-           initializeGoogleButton(googleSignupRef.current, 'signup');
-        }
-        clearInterval(checkGoogleLoad);
-      }
-    }, 500);
-
-    return () => clearInterval(checkGoogleLoad);
-  }, [isSignup]);
-
-  const handleGoogleCallback = (response: any) => {
+  const handleGoogleLogin = async () => {
+    setIsLoading(true);
+    setError('');
     try {
-      const jwt = response.credential;
-      const base64Url = jwt.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-      }).join(''));
-      
-      const payload = JSON.parse(jsonPayload);
-      
-      const googleUserEmail = payload.email;
-      const googleUserName = payload.name;
-      const googleUserPicture = payload.picture;
-
-      const usersStr = localStorage.getItem('aivan_users');
-      const users: User[] = usersStr ? JSON.parse(usersStr) : [];
-      
-      const existingUser = users.find(u => u.email === googleUserEmail);
-
-      // Check for Admin via Google (if applicable, though usually manual)
-      const isAdmin = googleUserEmail === 'vaxtoponline@gmail.com';
-
-      if (existingUser) {
-        onLogin({ ...existingUser, isAdmin, isPremium: isAdmin ? true : existingUser.isPremium });
+      // Using standard Firebase Popup which ensures auth.currentUser is set correctly
+      await signInWithPopup(auth, googleProvider);
+      // The logic in App.tsx (onAuthStateChanged) will handle the rest (DB fetch/save)
+    } catch (e: any) {
+      console.error("Google Login Error:", e);
+      if (e.code === 'auth/unauthorized-domain') {
+        setError('שגיאת דומיין: יש להוסיף את הדומיין הנוכחי ב-Firebase Console תחת Auth -> Settings -> Authorized Domains.');
+      } else if (e.code === 'auth/popup-closed-by-user') {
+        setError('ההתחברות בוטלה.');
       } else {
-        const newUser: User = { 
-          email: googleUserEmail, 
-          name: googleUserName, 
-          picture: googleUserPicture,
-          hasAcceptedTerms: false,
-          isAdmin,
-          isPremium: isAdmin
-        };
-        const updatedUsers = [...users, newUser];
-        localStorage.setItem('aivan_users', JSON.stringify(updatedUsers));
-        onSignup(newUser);
+        setError('שגיאה בהתחברות לגוגל: ' + e.message);
       }
-
-    } catch (e) {
-      console.error("Google Auth Error", e);
-      setError("שגיאה בהתחברות עם Google.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
     
-    // ADMIN HARDCODED LOGIN
-    if (email === 'vaxtoponline@gmail.com' && password === '0101') {
-        const adminUser: User = {
-            email,
-            name: 'Aivan Admin',
-            hasAcceptedTerms: true,
-            isAdmin: true,
-            isPremium: true,
-            preferences: { 
-                enterToSend: false, 
-                streamCode: true, 
-                saveHistory: true, 
-                theme: 'midnight' 
-            }
-        };
-        onLogin(adminUser);
-        return;
-    }
-
-    const usersStr = localStorage.getItem('aivan_users');
-    const users: User[] = usersStr ? JSON.parse(usersStr) : [];
-
-    if (isSignup) {
-      if (users.find(u => u.email === email)) {
-        setError('משתמש זה כבר קיים במערכת.');
-        return;
-      }
-      const newUser: User = { 
-        email, 
-        password, 
-        name: name || email.split('@')[0], 
-        hasAcceptedTerms: false 
-      };
-      const updatedUsers = [...users, newUser];
-      localStorage.setItem('aivan_users', JSON.stringify(updatedUsers));
-      onSignup(newUser);
-    } else {
-      const user = users.find(u => u.email === email && u.password === password);
-      if (user) {
-        onLogin(user);
-      } else {
-        setError('אימייל או סיסמה שגויים.');
-      }
+    try {
+        if (isSignup) {
+            await createUserWithEmailAndPassword(auth, email, password);
+            // We pass the name to App.tsx logic via a temporary hold or rely on App.tsx updating it
+            // Ideally, updateProfile should be called here, but App.tsx handles the DB sync.
+        } else {
+            await signInWithEmailAndPassword(auth, email, password);
+        }
+        // App.tsx listener handles the success transition
+    } catch (e: any) {
+        console.error(e);
+        if (e.code === 'auth/email-already-in-use') {
+            setError('אימייל זה כבר רשום במערכת.');
+        } else if (e.code === 'auth/invalid-credential' || e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password') {
+            setError('אימייל או סיסמה שגויים.');
+        } else if (e.code === 'auth/weak-password') {
+            setError('הסיסמה חייבת להכיל לפחות 6 תווים.');
+        } else {
+            setError('שגיאה: ' + e.message);
+        }
+        setIsLoading(false);
     }
   };
 
@@ -166,7 +78,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onSignup }) => {
       <AccessibilityManager positionClass="fixed top-6 right-6" />
 
       {/* 3D Flip Container */}
-      <div className={`relative w-full max-w-md h-[550px] transition-transform duration-700 transform-style-3d perspective-1000 ${isSignup ? 'rotate-y-180' : ''}`}>
+      <div className={`relative w-full max-w-md h-[600px] transition-transform duration-700 transform-style-3d perspective-1000 ${isSignup ? 'rotate-y-180' : ''}`}>
         
         {/* Front Side (Login) */}
         <div className="absolute inset-0 backface-hidden">
@@ -175,33 +87,40 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onSignup }) => {
             <h2 className="text-lg text-white text-center mb-4 font-light">ברוכים השבים</h2>
             
             {error && !isSignup && (
-              <div className="bg-red-500/80 text-white text-center p-2 rounded-lg mb-2 text-sm">{error}</div>
+              <div className="bg-red-500/80 text-white text-center p-2 rounded-lg mb-4 text-sm font-medium">{error}</div>
             )}
             
-            <form onSubmit={handleSubmit} className="space-y-3">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="text-white text-xs block mb-1">אימייל</label>
                 <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl bg-white/50 border border-white/40 focus:outline-none focus:ring-2 focus:ring-purple-300 placeholder-white/70 text-gray-900" />
+                  className="w-full px-4 py-3 rounded-xl bg-white/50 border border-white/40 focus:outline-none focus:ring-2 focus:ring-purple-300 placeholder-white/70 text-gray-900" />
               </div>
               <div>
                 <label className="text-white text-xs block mb-1">סיסמה</label>
                 <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl bg-white/50 border border-white/40 focus:outline-none focus:ring-2 focus:ring-purple-300 placeholder-white/70 text-gray-900" />
+                  className="w-full px-4 py-3 rounded-xl bg-white/50 border border-white/40 focus:outline-none focus:ring-2 focus:ring-purple-300 placeholder-white/70 text-gray-900" />
               </div>
-              <button type="submit" className="w-full py-2.5 rounded-xl bg-white text-purple-600 font-bold shadow-lg hover:scale-[1.02] transition-transform mt-2">
-                התחבר
+              <button type="submit" disabled={isLoading} className="w-full py-3 rounded-xl bg-white text-purple-600 font-bold shadow-lg hover:scale-[1.02] transition-transform mt-2 disabled:opacity-70">
+                {isLoading ? <i className="fas fa-spinner animate-spin"></i> : 'התחבר'}
               </button>
             </form>
 
-            <div className="relative my-4">
+            <div className="relative my-6">
                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/30"></div></div>
                <div className="relative flex justify-center text-xs"><span className="px-2 bg-transparent text-white">או</span></div>
             </div>
             
-            <div ref={googleLoginRef} className="w-full flex justify-center h-[44px]"></div>
+            <button 
+                onClick={handleGoogleLogin} 
+                disabled={isLoading}
+                className="w-full py-3 rounded-xl bg-white/90 hover:bg-white text-gray-800 font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-3"
+            >
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" />
+                <span>התחבר עם Google</span>
+            </button>
 
-            <div className="mt-4 text-center">
+            <div className="mt-6 text-center">
               <button onClick={toggleMode} className="text-white hover:text-yellow-200 underline decoration-dotted text-sm">
                 אין לך חשבון? הירשם עכשיו
               </button>
@@ -216,38 +135,45 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onSignup }) => {
             <h2 className="text-lg text-white text-center mb-4 font-light">יצירת חשבון חדש</h2>
             
             {error && isSignup && (
-              <div className="bg-red-500/80 text-white text-center p-2 rounded-lg mb-2 text-sm">{error}</div>
+              <div className="bg-red-500/80 text-white text-center p-2 rounded-lg mb-4 text-sm font-medium">{error}</div>
             )}
             
-            <form onSubmit={handleSubmit} className="space-y-3">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="text-white text-xs block mb-1">שם מלא</label>
                 <input type="text" required value={name} onChange={(e) => setName(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl bg-white/50 border border-white/40 focus:outline-none focus:ring-2 focus:ring-purple-300 placeholder-white/70 text-gray-900" />
+                  className="w-full px-4 py-3 rounded-xl bg-white/50 border border-white/40 focus:outline-none focus:ring-2 focus:ring-purple-300 placeholder-white/70 text-gray-900" />
               </div>
               <div>
                 <label className="text-white text-xs block mb-1">אימייל</label>
                 <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl bg-white/50 border border-white/40 focus:outline-none focus:ring-2 focus:ring-purple-300 placeholder-white/70 text-gray-900" />
+                  className="w-full px-4 py-3 rounded-xl bg-white/50 border border-white/40 focus:outline-none focus:ring-2 focus:ring-purple-300 placeholder-white/70 text-gray-900" />
               </div>
               <div>
                 <label className="text-white text-xs block mb-1">סיסמה</label>
                 <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl bg-white/50 border border-white/40 focus:outline-none focus:ring-2 focus:ring-purple-300 placeholder-white/70 text-gray-900" />
+                  className="w-full px-4 py-3 rounded-xl bg-white/50 border border-white/40 focus:outline-none focus:ring-2 focus:ring-purple-300 placeholder-white/70 text-gray-900" />
               </div>
-              <button type="submit" className="w-full py-2.5 rounded-xl bg-white text-purple-600 font-bold shadow-lg hover:scale-[1.02] transition-transform mt-2">
-                צור חשבון
+              <button type="submit" disabled={isLoading} className="w-full py-3 rounded-xl bg-white text-purple-600 font-bold shadow-lg hover:scale-[1.02] transition-transform mt-2 disabled:opacity-70">
+                {isLoading ? <i className="fas fa-spinner animate-spin"></i> : 'צור חשבון'}
               </button>
             </form>
 
-             <div className="relative my-4">
+             <div className="relative my-6">
                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/30"></div></div>
                <div className="relative flex justify-center text-xs"><span className="px-2 bg-transparent text-white">או</span></div>
             </div>
 
-            <div ref={googleSignupRef} className="w-full flex justify-center h-[44px]"></div>
+            <button 
+                onClick={handleGoogleLogin} 
+                disabled={isLoading}
+                className="w-full py-3 rounded-xl bg-white/90 hover:bg-white text-gray-800 font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-3"
+            >
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" />
+                <span>הירשם עם Google</span>
+            </button>
 
-            <div className="mt-4 text-center">
+            <div className="mt-6 text-center">
               <button onClick={toggleMode} className="text-white hover:text-yellow-200 underline decoration-dotted text-sm">
                 כבר יש לך חשבון? התחבר
               </button>

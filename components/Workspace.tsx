@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { ChatMessage, Role, ChatMode, User, AdRequest } from '../types';
 import { sendMessageToGemini, sendMessageToGeminiStream } from '../services/geminiService';
@@ -245,15 +244,28 @@ const Workspace: React.FC<WorkspaceProps> = ({
   };
 
   const extractCode = (text: string) => {
+    // Improved regex to find the LAST valid complete code block if multiple exist, or just the main one.
+    // It captures content inside ```...```.
     const codeBlockRegex = /```(?:\w+)?\n([\s\S]*?)```/g;
-    let match;
-    let foundCode = '';
-    while ((match = codeBlockRegex.exec(text)) !== null) foundCode += match[1] + '\n\n';
+    const matches = [...text.matchAll(codeBlockRegex)];
     
-    const openBlockMatch = text.match(/```(?:\w+)?\n([\s\S]*?)$/);
-    if (openBlockMatch && !text.endsWith('```')) foundCode += openBlockMatch[1];
-
-    if (foundCode.trim()) setCode(foundCode);
+    if (matches.length > 0) {
+        // Use the longest block as it's likely the full file, preventing partial snippets
+        // or just use the last one if it seems complete.
+        // For simplicity and stability with Gemini 2.5/3:
+        // We will concat all blocks if they look like parts, but prompt says single file.
+        // Let's grab the Largest block.
+        const largestBlock = matches.reduce((prev, current) => {
+            return (current[1].length > prev[1].length) ? current : prev;
+        });
+        setCode(largestBlock[1].trim());
+    } else {
+        // Fallback for streaming incomplete block at the end
+        const openBlockMatch = text.match(/```(?:\w+)?\n([\s\S]*?)$/);
+        if (openBlockMatch && !text.endsWith('```')) {
+            setCode(openBlockMatch[1]);
+        }
+    }
   };
 
   const cleanMessage = (text: string) => {
