@@ -66,20 +66,19 @@ const AnimatedSelect = ({
       ref={containerRef}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className={`relative transition-all duration-300 ease-out bg-white/10 backdrop-blur-md border border-white/20 rounded-xl cursor-pointer hover:bg-white/20 z-20 h-[42px] hover:scale-105 flex-1 md:flex-none`}
-      style={{ minWidth: '140px' }}
+      className={`relative transition-all duration-300 ease-out bg-white/10 backdrop-blur-md border border-white/20 rounded-xl cursor-pointer hover:bg-white/20 h-[42px] hover:scale-105 flex-1 md:flex-none flex items-center min-w-[140px]`}
       onClick={() => setIsOpen(!isOpen)}
     >
-      <div className="flex items-center justify-between px-3 py-2 h-full text-white">
+      <div className="flex items-center justify-between px-3 py-2 w-full text-white">
         <div className="flex items-center gap-2 overflow-hidden">
           <i className={`fas ${icon}`}></i>
           <span className="text-sm font-medium truncate">{selectedLabel}</span>
         </div>
-        <i className={`fas fa-chevron-down text-xs transition-transform ${isOpen ? 'rotate-180' : ''}`}></i>
+        <i className={`fas fa-chevron-down text-xs transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}></i>
       </div>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-full bg-white rounded-xl shadow-2xl overflow-hidden z-[100] border border-gray-200 fade-in-up origin-top">
+        <div className="absolute top-[110%] left-0 w-full min-w-[160px] bg-white rounded-xl shadow-2xl overflow-hidden z-[999] border border-gray-200 fade-in-up origin-top ring-1 ring-black/5">
           {options.map(opt => (
             <div 
               key={opt.value}
@@ -88,10 +87,10 @@ const AnimatedSelect = ({
                 onChange(opt.value);
                 setIsOpen(false);
               }}
-              className={`px-4 py-3 text-sm hover:bg-purple-50 transition-colors border-b last:border-0 border-gray-100 flex items-center justify-between text-gray-800 ${value === opt.value ? 'font-bold text-purple-700 bg-purple-50' : ''}`}
+              className={`px-4 py-3 text-sm hover:bg-purple-50 transition-colors border-b last:border-0 border-gray-100 flex items-center justify-between text-gray-800 cursor-pointer ${value === opt.value ? 'font-bold text-purple-700 bg-purple-50' : ''}`}
             >
               {opt.label}
-              {value === opt.value && <i className="fas fa-check"></i>}
+              {value === opt.value && <i className="fas fa-check text-purple-600"></i>}
             </div>
           ))}
         </div>
@@ -160,7 +159,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     <div className="min-h-screen w-full flex flex-col items-center animate-gradient p-4 relative overflow-x-hidden">
       
       {/* Top Left - Swapped Buttons */}
-      <div className="fixed top-4 left-4 md:top-6 md:left-6 z-50 flex items-center gap-2 md:gap-3">
+      <div className="fixed top-4 left-4 md:top-6 md:left-6 z-40 flex items-center gap-2 md:gap-3">
         
         {/* Premium Button */}
         {!user?.isPremium && (
@@ -238,7 +237,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       </div>
 
       {/* Top Right Controls */}
-      <div className="fixed top-4 right-4 md:top-6 md:right-6 flex items-center gap-2 md:gap-3 z-50">
+      <div className="fixed top-4 right-4 md:top-6 md:right-6 flex items-center gap-2 md:gap-3 z-40">
         <AccessibilityManager positionClass="relative" buttonClass="bg-white/20 hover:bg-white/30 h-10 w-10 md:h-12 md:w-12" />
         
         <button 
@@ -263,8 +262,8 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
       </header>
 
-      {/* Main Input */}
-      <div className="w-full md:max-w-4xl mt-6 md:mt-10 fade-in-up z-40 px-2" style={{ animationDelay: '0.2s' }}>
+      {/* Main Input - High Z-Index for Dropdowns */}
+      <div className="w-full md:max-w-4xl mt-6 md:mt-10 fade-in-up z-50 px-2" style={{ animationDelay: '0.2s' }}>
         <div className="bg-white/20 backdrop-blur-xl rounded-3xl shadow-2xl p-2 border border-white/30 relative">
           
           <textarea
@@ -275,7 +274,8 @@ const Dashboard: React.FC<DashboardProps> = ({
           />
 
           <div className="flex flex-col md:flex-row items-center justify-between px-2 md:px-4 pb-2 mt-2 gap-3 relative">
-            <div className="flex gap-2 md:gap-3 items-center relative flex-wrap justify-center md:justify-start w-full md:w-auto">
+            {/* Controls Container with visible overflow for dropdowns */}
+            <div className="flex gap-2 md:gap-3 items-center relative flex-wrap justify-center md:justify-start w-full md:w-auto z-[60]">
                <button 
                 onClick={() => fileInputRef.current?.click()}
                 className="text-white/80 hover:text-white hover:bg-white/10 w-10 h-10 flex items-center justify-center rounded-full transition-colors relative"
@@ -297,7 +297,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 accept="image/*, .txt, .js, .html, .css, .json"
               />
 
-              <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 no-scrollbar">
+              <div className="flex gap-2 w-full md:w-auto overflow-visible pb-1 md:pb-0 no-scrollbar relative">
                 <AnimatedSelect 
                     icon="fa-code"
                     value={language}

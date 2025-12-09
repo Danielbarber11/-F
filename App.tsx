@@ -43,6 +43,7 @@ const App: React.FC = () => {
                 setCurrentUser(effectiveUser);
                 loadUserData(firebaseUser.uid);
                 
+                // CRITICAL FIX: Only show terms if user hasn't accepted them yet.
                 if (effectiveUser.hasAcceptedTerms) {
                     setCurrentScreen(Screen.HOME);
                 } else {
@@ -63,6 +64,7 @@ const App: React.FC = () => {
                  await saveUserToDB(newUser).catch(e => console.warn("Initial DB Save failed", e));
                  
                  setCurrentUser(newUser);
+                 // Force Terms for new users
                  setCurrentScreen(Screen.TERMS);
             }
         } else {
@@ -102,7 +104,7 @@ const App: React.FC = () => {
     const updatedUser = { ...currentUser, hasAcceptedTerms: true };
     setCurrentUser(updatedUser);
     
-    // Save to DB
+    // Save to DB immediately so next time they skip terms
     if (auth.currentUser) {
         await saveUserToDB(updatedUser).catch(e => console.warn("Failed to save terms acceptance", e));
     }
