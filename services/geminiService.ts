@@ -1,7 +1,7 @@
 import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 import { ChatMessage, Role, ChatMode } from "../types";
 
-export const ai = new GoogleGenAI({ apiKey: 'AIzaSyACNoSZCE1klwD-fXtyJtf7pwKMD_LFgbA' });
+export const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const BASE_SYSTEM_INSTRUCTION = `
 אתה "אייבן" (Aivan), עוזר תכנות מומחה ובונה אתרים.

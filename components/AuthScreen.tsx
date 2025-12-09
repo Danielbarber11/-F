@@ -1,14 +1,16 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AccessibilityManager from './AccessibilityManager';
 import { User } from '../types';
-import { auth, googleProvider } from '../services/firebase';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
+import { auth } from '../services/firebase';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithCredential, GoogleAuthProvider } from 'firebase/auth';
 
 interface AuthScreenProps {
   onLogin: (user: User) => void;
   onSignup: (user: User) => void;
 }
+
+declare const google: any;
 
 const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onSignup }) => {
   const [isSignup, setIsSignup] = useState(false);
@@ -18,26 +20,70 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onSignup }) => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleGoogleLogin = async () => {
-    setIsLoading(true);
-    setError('');
-    try {
-      // Using standard Firebase Popup which ensures auth.currentUser is set correctly
-      await signInWithPopup(auth, googleProvider);
-      // The logic in App.tsx (onAuthStateChanged) will handle the rest (DB fetch/save)
-    } catch (e: any) {
-      console.error("Google Login Error:", e);
-      if (e.code === 'auth/unauthorized-domain') {
-        setError('שגיאת דומיין: יש להוסיף את הדומיין הנוכחי ב-Firebase Console תחת Auth -> Settings -> Authorized Domains.');
-      } else if (e.code === 'auth/popup-closed-by-user') {
-        setError('ההתחברות בוטלה.');
-      } else {
-        setError('שגיאה בהתחברות לגוגל: ' + e.message);
+  // Initialize Google Sign-In (GIS)
+  useEffect(() => {
+    const handleCredentialResponse = async (response: any) => {
+      setIsLoading(true);
+      setError('');
+      try {
+        const credential = GoogleAuthProvider.credential(response.credential);
+        await signInWithCredential(auth, credential);
+        // App.tsx listener handles the success transition
+      } catch (e: any) {
+        console.error("GIS Login Error:", e);
+        setError("שגיאה בהתחברות לגוגל: " + e.message);
+        setIsLoading(false);
       }
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
+
+    const initGoogle = () => {
+      if (typeof google !== 'undefined' && google.accounts) {
+        try {
+            google.accounts.id.initialize({
+            client_id: "1029411846084-2jidcvnmiumb0ajqdm3fcot1rvmaldr6.apps.googleusercontent.com",
+            callback: handleCredentialResponse,
+            auto_select: false,
+            cancel_on_tap_outside: true
+            });
+
+            // Render buttons for both sides
+            const loginBtn = document.getElementById('google-btn-login');
+            if (loginBtn) {
+            google.accounts.id.renderButton(loginBtn, {
+                theme: 'filled_blue',
+                size: 'large',
+                width: '100%', // Responsive width
+                text: 'signin_with',
+                shape: 'pill'
+            });
+            }
+
+            const signupBtn = document.getElementById('google-btn-signup');
+            if (signupBtn) {
+            google.accounts.id.renderButton(signupBtn, {
+                theme: 'filled_blue',
+                size: 'large',
+                width: '100%', // Responsive width
+                text: 'signup_with',
+                shape: 'pill'
+            });
+            }
+        } catch (err) {
+            console.error("Google Init Error", err);
+        }
+      }
+    };
+
+    // Retry loop to ensure google script is loaded
+    const interval = setInterval(() => {
+      if (typeof google !== 'undefined') {
+        initGoogle();
+        clearInterval(interval);
+      }
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, [isSignup]); // Re-run when flipping to ensure buttons render if needed
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,12 +93,9 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onSignup }) => {
     try {
         if (isSignup) {
             await createUserWithEmailAndPassword(auth, email, password);
-            // We pass the name to App.tsx logic via a temporary hold or rely on App.tsx updating it
-            // Ideally, updateProfile should be called here, but App.tsx handles the DB sync.
         } else {
             await signInWithEmailAndPassword(auth, email, password);
         }
-        // App.tsx listener handles the success transition
     } catch (e: any) {
         console.error(e);
         if (e.code === 'auth/email-already-in-use') {
@@ -78,7 +121,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onSignup }) => {
       <AccessibilityManager positionClass="fixed top-6 right-6" />
 
       {/* 3D Flip Container */}
-      <div className={`relative w-full max-w-md h-[600px] transition-transform duration-700 transform-style-3d perspective-1000 ${isSignup ? 'rotate-y-180' : ''}`}>
+      <div className={`relative w-full max-w-md h-[650px] transition-transform duration-700 transform-style-3d perspective-1000 ${isSignup ? 'rotate-y-180' : ''}`}>
         
         {/* Front Side (Login) */}
         <div className="absolute inset-0 backface-hidden">
@@ -111,14 +154,10 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onSignup }) => {
                <div className="relative flex justify-center text-xs"><span className="px-2 bg-transparent text-white">או</span></div>
             </div>
             
-            <button 
-                onClick={handleGoogleLogin} 
-                disabled={isLoading}
-                className="w-full py-3 rounded-xl bg-white/90 hover:bg-white text-gray-800 font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-3"
-            >
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" />
-                <span>התחבר עם Google</span>
-            </button>
+            {/* Google Button Container - GIS */}
+            <div className="w-full flex justify-center min-h-[44px]">
+                <div id="google-btn-login" className="w-full"></div>
+            </div>
 
             <div className="mt-6 text-center">
               <button onClick={toggleMode} className="text-white hover:text-yellow-200 underline decoration-dotted text-sm">
@@ -164,14 +203,10 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onSignup }) => {
                <div className="relative flex justify-center text-xs"><span className="px-2 bg-transparent text-white">או</span></div>
             </div>
 
-            <button 
-                onClick={handleGoogleLogin} 
-                disabled={isLoading}
-                className="w-full py-3 rounded-xl bg-white/90 hover:bg-white text-gray-800 font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-3"
-            >
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" />
-                <span>הירשם עם Google</span>
-            </button>
+            {/* Google Button Container - GIS */}
+            <div className="w-full flex justify-center min-h-[44px]">
+                <div id="google-btn-signup" className="w-full"></div>
+            </div>
 
             <div className="mt-6 text-center">
               <button onClick={toggleMode} className="text-white hover:text-yellow-200 underline decoration-dotted text-sm">

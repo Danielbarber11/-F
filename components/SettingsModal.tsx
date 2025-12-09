@@ -77,7 +77,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   };
 
   const handleThemeChange = (theme: string) => {
-    setSelectedTheme(theme);
+    setSelectedTheme(theme as any);
     if (user) {
         onUpdateUser({
             ...user,
